@@ -34,6 +34,13 @@ button{font:inherit;color:var(--ink);background:var(--card);border:1px solid #2a
 .legend{display:flex;gap:16px;font-size:13px;color:var(--sub);margin-top:8px}
 .legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
 #msg{color:var(--sub);font-size:13px;margin-top:12px}
+.wear{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;background:var(--card);border-radius:16px;padding:14px;margin-top:14px}
+.wear svg{width:120px;height:150px}
+.wear h2{font-size:18px;margin:0 0 4px}
+.wear ul{margin:0;padding-left:1.1em;color:var(--sub);font-size:14px}
+.src{display:flex;gap:6px;margin-top:14px}
+.src button{flex:1;font-size:14px}
+.src button[aria-pressed=true]{background:#2a3a8a;border-color:#4f63d8}
 </style>
 </head>
 <body>
@@ -42,9 +49,14 @@ button{font:inherit;color:var(--ink);background:var(--card);border:1px solid #2a
   <button id="re">更新</button>
 </header>
 <div id="verdict">読み込み中…</div>
-<div class="grid" id="tbl"></div>
+<div class="wear" id="wear"></div>
+<div class="grid" id="tbl" style="margin-top:14px"></div>
 <div class="fig"><svg id="chart"></svg></div>
 <div class="legend"><span><i style="background:var(--y)"></i>昨日</span><span><i style="background:var(--t)"></i>今日</span></div>
+<div class="src" id="src">
+  <button data-m="jma_seamless">気象庁モデル</button>
+  <button data-m="best_match">世界標準モデル</button>
+</div>
 <div id="msg"></div>
 <script>
 {
@@ -52,6 +64,9 @@ const FALLBACK={lat:35.7929,lon:140.0570,name:"白井市 西白井付近"};
 const WMO={0:"☀ 快晴",1:"🌤 晴れ",2:"⛅ 晴れ時々曇り",3:"☁ 曇り",45:"🌫 霧",48:"🌫 霧",51:"🌦 霧雨",53:"🌦 霧雨",55:"🌦 霧雨",61:"🌧 小雨",63:"🌧 雨",65:"🌧 大雨",66:"🌧 着氷性の雨",67:"🌧 着氷性の雨",71:"🌨 小雪",73:"🌨 雪",75:"🌨 大雪",77:"🌨 雪",80:"🌦 にわか雨",81:"🌦 にわか雨",82:"⛈ 激しいにわか雨",85:"🌨 にわか雪",86:"🌨 にわか雪",95:"⛈ 雷雨",96:"⛈ 雷雨",99:"⛈ 雷雨"};
 const $=id=>document.getElementById(id);
 let last=null;
+let model="jma_seamless";try{model=localStorage.getItem("tenki_model")||model}catch(e){}
+const MNAME={jma_seamless:"気象庁モデル",best_match:"世界標準モデル"};
+function markSrc(){document.querySelectorAll("#src button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===model))}
 const f1=v=>(Math.round(v*10)/10).toFixed(1);
 const sg=v=>(v>0?"+":v<0?"−":"±")+f1(Math.abs(v));
 const cls=v=>v>0.05?"up":v<-0.05?"dn":"";
@@ -70,14 +85,21 @@ async function load(){
   try{
     const pos=await getPos();
     $("place").textContent=pos.name+"("+pos.lat.toFixed(2)+", "+pos.lon.toFixed(2)+")";
-    const u="https://api.open-meteo.com/v1/forecast?latitude="+pos.lat+"&longitude="+pos.lon+
-      "&hourly=temperature_2m&daily=temperature_2m_max,temperature_2m_min,weather_code"+
+    const base="https://api.open-meteo.com/v1/forecast?latitude="+pos.lat+"&longitude="+pos.lon+
+      "&hourly=temperature_2m,precipitation&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum"+
       "&past_days=1&forecast_days=1&timezone=Asia%2FTokyo";
-    const r=await fetch(u);if(!r.ok)throw new Error("HTTP "+r.status);
-    const d=await r.json();
+    let used=model,d=null;
+    try{
+      const r=await fetch(base+"&models="+model);if(!r.ok)throw 0;
+      d=await r.json();if(d.daily.temperature_2m_max[1]==null)throw 0;
+    }catch(_){
+      used="best_match";
+      const r=await fetch(base);if(!r.ok)throw new Error("HTTP "+r.status);
+      d=await r.json();
+    }
     try{localStorage.setItem("tenki",JSON.stringify({d,name:pos.name,at:Date.now()}))}catch(e){}
     render(d);
-    $("msg").textContent="更新: "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})+"・データ: Open-Meteo";
+    $("msg").textContent="更新: "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})+"・"+MNAME[used]+"(Open-Meteo経由)";
   }catch(e){
     let c=null;try{c=JSON.parse(localStorage.getItem("tenki"))}catch(_){}
     if(c){render(c.d);$("msg").textContent="通信できなかったため前回のデータを表示中("+new Date(c.at).toLocaleString("ja-JP")+")";}
@@ -103,6 +125,9 @@ function render(d){
     "<div>最低</div><div>"+f1(yMin)+"℃</div><div class='big'>"+f1(tMin)+"℃</div><div class='"+cls(dMin)+"'>"+sg(dMin)+"</div>"+
     "<div>天気</div><div>"+w(dl.weather_code[0])+"</div><div>"+w(dl.weather_code[1])+"</div><div></div>";
   last={yH,tH,now};draw();
+  const day=H.time.slice(24,48).map((_,i)=>i).filter(i=>i>=7&&i<=21);
+  const rainH=day.filter(i=>(H.precipitation[24+i]||0)>=0.2).length;
+  wear(tMax,tMin,dMax,dl.weather_code[1],rainH,day.map(i=>tH[i]));
 }
 
 function draw(){
@@ -124,6 +149,50 @@ function draw(){
   g+="<circle cx='"+x(n)+"' cy='"+y(last.tH[n])+"' r='5' fill='#ff7a4d'/>";
   s.innerHTML=g;
 }
+function wear(mx,mn,dMax,code,rainH,dayT){
+  // 日中(7〜21時)の平均気温で服装を決める
+  const a=dayT.reduce((s,v)=>s+v,0)/dayT.length;
+  const L=[
+    [28,"半袖でOK","#f7e463","t",["Tシャツ・半袖","日差し対策も"]],
+    [24,"半袖+薄い羽織り","#ffd27a","t",["半袖か薄手の長袖","冷房対策に薄い羽織り"]],
+    [20,"長袖シャツ","#9fd8c8","l",["長袖シャツ・カットソー","朝晩は薄手カーディガン"]],
+    [16,"カーディガン・薄手の上着","#7fb7e8","c",["ニットやカーディガン","薄手のジャケット"]],
+    [12,"ジャケット","#6f8fe0","j",["ジャケット・トレンチコート","インナーは長袖"]],
+    [7,"コート","#8a6fd0","k",["ウールコート","ニット+長袖インナー"]],
+    [-99,"ダウン・マフラー","#c25b8a","d",["ダウンコート","マフラー・手袋があると安心"]]];
+  const k=L.find(x=>a>=x[0]);
+  const rain=rainH>0||(code>=51&&code<=99);
+  const tips=k[4].slice();
+  if(mx-mn>=10)tips.push("寒暖差"+Math.round(mx-mn)+"℃:脱ぎ着しやすい服で");
+  if(dMax<=-3)tips.push("昨日より寒いので一枚多めに");
+  else if(dMax>=3)tips.push("昨日より暖かいので一枚少なめでも");
+  if(rain)tips.push("傘を忘れずに"+(rainH?"(雨の予想 "+rainH+"時間)":""));
+  $("wear").innerHTML=fig(k[2],k[3],rain)+"<div><h2>今日の服装:"+k[1]+"</h2><ul>"+tips.map(s=>"<li>"+s+"</li>").join("")+"</ul><div style='font-size:12px;color:var(--sub);margin-top:4px'>日中の平均 "+f1(a)+"℃ から判断</div></div>";
+}
+function fig(col,type,rain){
+  const skin="#f2c9a0",pants="#2b3566";
+  const long=type!=="t", outer="jkd".includes(type)||type==="c";
+  const coatLen=type==="k"||type==="d"?118:98;
+  let s="<svg viewBox='0 0 120 150'>";
+  if(rain)s+="<path d='M86 40 Q104 18 120 40 Z' fill='#4fc1c6'/><line x1='103' y1='40' x2='103' y2='96' stroke='#9aa6d6' stroke-width='2'/><path d='M103 96 q0 6 -5 6' fill='none' stroke='#9aa6d6' stroke-width='2'/>";
+  s+="<rect x='44' y='96' width='13' height='42' rx='5' fill='"+pants+"'/><rect x='63' y='96' width='13' height='42' rx='5' fill='"+pants+"'/>";
+  s+="<rect x='40' y='136' width='18' height='8' rx='4' fill='#1a1f3a'/><rect x='62' y='136' width='18' height='8' rx='4' fill='#1a1f3a'/>";
+  // 腕
+  if(long)s+="<rect x='24' y='50' width='14' height='46' rx='7' fill='"+col+"'/><rect x='82' y='50' width='14' height='46' rx='7' fill='"+col+"'/>";
+  else s+="<rect x='26' y='50' width='13' height='22' rx='6' fill='"+col+"'/><rect x='81' y='50' width='13' height='22' rx='6' fill='"+col+"'/><rect x='27' y='70' width='11' height='26' rx='5' fill='"+skin+"'/><rect x='82' y='70' width='11' height='26' rx='5' fill='"+skin+"'/>";
+  s+="<circle cx='31' cy='98' r='6' fill='"+(type==="d"?"#4fc1c6":skin)+"'/><circle cx='89' cy='98' r='6' fill='"+(type==="d"?"#4fc1c6":skin)+"'/>";
+  // 胴
+  s+="<rect x='36' y='46' width='48' height='"+(outer?coatLen-46:56)+"' rx='10' fill='"+col+"'/>";
+  if(outer)s+="<line x1='60' y1='50' x2='60' y2='"+(coatLen-2)+"' stroke='rgba(0,0,0,.25)' stroke-width='2'/>";
+  if(type==="d")for(let y=60;y<coatLen;y+=14)s+="<line x1='37' y1='"+y+"' x2='83' y2='"+y+"' stroke='rgba(0,0,0,.18)' stroke-width='2'/>";
+  // 頭
+  s+="<circle cx='60' cy='28' r='17' fill='"+skin+"'/><path d='M43 26 Q46 8 60 9 Q76 9 77 26 Q70 16 60 17 Q50 17 43 26Z' fill='#3a2a22'/>";
+  s+="<circle cx='54' cy='30' r='1.8' fill='#3a2a22'/><circle cx='66' cy='30' r='1.8' fill='#3a2a22'/><path d='M55 37 Q60 40 65 37' fill='none' stroke='#3a2a22' stroke-width='1.5'/>";
+  if(type==="d")s+="<rect x='42' y='42' width='36' height='10' rx='5' fill='#e8452c'/><rect x='64' y='48' width='9' height='20' rx='4' fill='#e8452c'/>";
+  return s+"</svg>";
+}
+document.querySelectorAll("#src button").forEach(b=>b.addEventListener("click",()=>{model=b.dataset.m;try{localStorage.setItem("tenki_model",model)}catch(e){}markSrc();load();}));
+markSrc();
 const ro=new ResizeObserver(draw);ro.observe($("chart"));
 $("re").addEventListener("click",load);
 load();
