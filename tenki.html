@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="昨日と今日">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b1433">
+<title>昨日と今日</title>
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<link rel="icon" href="data:image/png;base64,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">
+<style>
+:root{--bg:#0b1433;--card:#141f4a;--ink:#eef1ff;--sub:#9aa6d6;--y:#7d8bd8;--t:#ff7a4d;--warm:#ff7a4d;--cool:#4fc1c6}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+body{padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 24px)}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+h1{font-size:20px;margin:0}
+#place{color:var(--sub);font-size:13px}
+button{font:inherit;color:var(--ink);background:var(--card);border:1px solid #2a3770;border-radius:12px;min-height:44px;padding:0 14px}
+#verdict{margin:18px 0 14px;font-size:clamp(26px,8vw,38px);font-weight:800;line-height:1.15}
+#verdict small{display:block;font-size:14px;font-weight:400;color:var(--sub);margin-top:6px}
+.grid{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:0;background:var(--card);border-radius:16px;overflow:hidden}
+.grid div{padding:12px 10px;border-bottom:1px solid #22306a;text-align:right;white-space:nowrap}
+.grid div:nth-child(4n+1){text-align:left;color:var(--sub)}
+.grid .h{color:var(--sub);font-size:13px}
+.grid div:nth-last-child(-n+4){border-bottom:0}
+.big{font-size:22px;font-weight:700}
+.up{color:var(--warm)}.dn{color:var(--cool)}
+.fig{position:relative;height:230px;background:var(--card);border-radius:16px;margin-top:14px}
+.fig svg{position:absolute;inset:0;width:100%;height:100%}
+.legend{display:flex;gap:16px;font-size:13px;color:var(--sub);margin-top:8px}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+#msg{color:var(--sub);font-size:13px;margin-top:12px}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>昨日と今日の気温</h1><div id="place">現在地を取得中…</div></div>
+  <button id="re">更新</button>
+</header>
+<div id="verdict">読み込み中…</div>
+<div class="grid" id="tbl"></div>
+<div class="fig"><svg id="chart"></svg></div>
+<div class="legend"><span><i style="background:var(--y)"></i>昨日</span><span><i style="background:var(--t)"></i>今日</span></div>
+<div id="msg"></div>
+<script>
+{
+const FALLBACK={lat:35.7929,lon:140.0570,name:"白井市 西白井付近"};
+const WMO={0:"☀ 快晴",1:"🌤 晴れ",2:"⛅ 晴れ時々曇り",3:"☁ 曇り",45:"🌫 霧",48:"🌫 霧",51:"🌦 霧雨",53:"🌦 霧雨",55:"🌦 霧雨",61:"🌧 小雨",63:"🌧 雨",65:"🌧 大雨",66:"🌧 着氷性の雨",67:"🌧 着氷性の雨",71:"🌨 小雪",73:"🌨 雪",75:"🌨 大雪",77:"🌨 雪",80:"🌦 にわか雨",81:"🌦 にわか雨",82:"⛈ 激しいにわか雨",85:"🌨 にわか雪",86:"🌨 にわか雪",95:"⛈ 雷雨",96:"⛈ 雷雨",99:"⛈ 雷雨"};
+const $=id=>document.getElementById(id);
+let last=null;
+const f1=v=>(Math.round(v*10)/10).toFixed(1);
+const sg=v=>(v>0?"+":v<0?"−":"±")+f1(Math.abs(v));
+const cls=v=>v>0.05?"up":v<-0.05?"dn":"";
+
+function getPos(){
+  return new Promise(res=>{
+    if(!navigator.geolocation)return res(FALLBACK);
+    navigator.geolocation.getCurrentPosition(
+      p=>res({lat:p.coords.latitude,lon:p.coords.longitude,name:"現在地"}),
+      ()=>res(FALLBACK),{timeout:8000,maximumAge:600000});
+  });
+}
+
+async function load(){
+  $("verdict").textContent="読み込み中…";$("msg").textContent="";
+  try{
+    const pos=await getPos();
+    $("place").textContent=pos.name+"("+pos.lat.toFixed(2)+", "+pos.lon.toFixed(2)+")";
+    const u="https://api.open-meteo.com/v1/forecast?latitude="+pos.lat+"&longitude="+pos.lon+
+      "&hourly=temperature_2m&daily=temperature_2m_max,temperature_2m_min,weather_code"+
+      "&past_days=1&forecast_days=1&timezone=Asia%2FTokyo";
+    const r=await fetch(u);if(!r.ok)throw new Error("HTTP "+r.status);
+    const d=await r.json();
+    try{localStorage.setItem("tenki",JSON.stringify({d,name:pos.name,at:Date.now()}))}catch(e){}
+    render(d);
+    $("msg").textContent="更新: "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})+"・データ: Open-Meteo";
+  }catch(e){
+    let c=null;try{c=JSON.parse(localStorage.getItem("tenki"))}catch(_){}
+    if(c){render(c.d);$("msg").textContent="通信できなかったため前回のデータを表示中("+new Date(c.at).toLocaleString("ja-JP")+")";}
+    else{$("verdict").textContent="取得できませんでした";$("msg").textContent="通信状態を確認して「更新」を押してください("+e.message+")";}
+  }
+}
+
+function render(d){
+  const dl=d.daily, H=d.hourly;
+  const yMax=dl.temperature_2m_max[0], yMin=dl.temperature_2m_min[0];
+  const tMax=dl.temperature_2m_max[1], tMin=dl.temperature_2m_min[1];
+  const dMax=tMax-yMax, dMin=tMin-yMin;
+  const yH=H.temperature_2m.slice(0,24), tH=H.temperature_2m.slice(24,48);
+  const now=new Date().getHours();
+  const dNow=tH[now]-yH[now];
+  const word=v=>v>=0.5?"暖かい":v<=-0.5?"寒い":"ほぼ同じ";
+  $("verdict").innerHTML="今日は昨日より<br><span class='"+cls(dMax)+"'>"+(Math.abs(dMax)<0.5?"ほぼ同じ":f1(Math.abs(dMax))+"℃ "+word(dMax))+"</span>"+
+    "<small>最高気温で比較/いま("+now+"時)は昨日の同時刻より "+sg(dNow)+"℃</small>";
+  const w=c=>WMO[c]||"—";
+  $("tbl").innerHTML=
+    "<div class='h'></div><div class='h'>昨日</div><div class='h'>今日</div><div class='h'>差</div>"+
+    "<div>最高</div><div>"+f1(yMax)+"℃</div><div class='big'>"+f1(tMax)+"℃</div><div class='"+cls(dMax)+"'>"+sg(dMax)+"</div>"+
+    "<div>最低</div><div>"+f1(yMin)+"℃</div><div class='big'>"+f1(tMin)+"℃</div><div class='"+cls(dMin)+"'>"+sg(dMin)+"</div>"+
+    "<div>天気</div><div>"+w(dl.weather_code[0])+"</div><div>"+w(dl.weather_code[1])+"</div><div></div>";
+  last={yH,tH,now};draw();
+}
+
+function draw(){
+  if(!last)return;
+  const s=$("chart"),W=s.clientWidth,Ht=s.clientHeight,p={l:34,r:12,t:14,b:26};
+  const all=last.yH.concat(last.tH).filter(v=>v!=null);
+  let lo=Math.floor(Math.min(...all))-1,hi=Math.ceil(Math.max(...all))+1;
+  const x=i=>p.l+(W-p.l-p.r)*i/23, y=v=>p.t+(Ht-p.t-p.b)*(hi-v)/(hi-lo);
+  const path=a=>a.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join("");
+  const step=Math.max(1,Math.round((hi-lo)/4));let g="";
+  for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step)
+    g+="<line x1='"+p.l+"' x2='"+(W-p.r)+"' y1='"+y(v)+"' y2='"+y(v)+"' stroke='#24316a'/><text x='"+(p.l-6)+"' y='"+(y(v)+4)+"' fill='#9aa6d6' font-size='11' text-anchor='end'>"+v+"°</text>";
+  for(const h of [0,6,12,18,23])
+    g+="<text x='"+x(h)+"' y='"+(Ht-8)+"' fill='#9aa6d6' font-size='11' text-anchor='middle'>"+h+"時</text>";
+  const n=last.now;
+  g+="<line x1='"+x(n)+"' x2='"+x(n)+"' y1='"+p.t+"' y2='"+(Ht-p.b)+"' stroke='#9aa6d6' stroke-dasharray='3 3'/>";
+  g+="<path d='"+path(last.yH)+"' fill='none' stroke='#7d8bd8' stroke-width='2.5' stroke-dasharray='6 4'/>";
+  g+="<path d='"+path(last.tH)+"' fill='none' stroke='#ff7a4d' stroke-width='3'/>";
+  g+="<circle cx='"+x(n)+"' cy='"+y(last.tH[n])+"' r='5' fill='#ff7a4d'/>";
+  s.innerHTML=g;
+}
+const ro=new ResizeObserver(draw);ro.observe($("chart"));
+$("re").addEventListener("click",load);
+load();
+}
+</script>
+</body>
+</html>
