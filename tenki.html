@@ -26,6 +26,9 @@ button{font:inherit;color:var(--ink);background:var(--card);border:1px solid #2a
 .grid div{padding:12px 10px;border-bottom:1px solid #22306a;text-align:right;white-space:nowrap}
 .grid div:nth-child(4n+1){text-align:left;color:var(--sub)}
 .grid .h{color:var(--sub);font-size:13px}
+.grid small{display:block;font-size:12px}
+.grid .tm{background:#1a2a5e}
+.grid .wx{white-space:normal;font-size:13px}
 .grid div:nth-last-child(-n+4){border-bottom:0}
 .big{font-size:22px;font-weight:700}
 .up{color:var(--warm)}.dn{color:var(--cool)}
@@ -50,9 +53,10 @@ button{font:inherit;color:var(--ink);background:var(--card);border:1px solid #2a
 </header>
 <div id="verdict">読み込み中…</div>
 <div class="wear" id="wear"></div>
+<div class="wear" id="wear2"></div>
 <div class="grid" id="tbl" style="margin-top:14px"></div>
 <div class="fig"><svg id="chart"></svg></div>
-<div class="legend"><span><i style="background:var(--y)"></i>昨日</span><span><i style="background:var(--t)"></i>今日</span></div>
+<div class="legend"><span><i style="background:var(--y)"></i>昨日</span><span><i style="background:var(--t)"></i>今日</span><span><i style="background:#4fc1c6"></i>明日</span></div>
 <div class="src" id="src">
   <button data-m="jma_seamless">気象庁モデル</button>
   <button data-m="best_match">世界標準モデル</button>
@@ -87,11 +91,11 @@ async function load(){
     $("place").textContent=pos.name+"("+pos.lat.toFixed(2)+", "+pos.lon.toFixed(2)+")";
     const base="https://api.open-meteo.com/v1/forecast?latitude="+pos.lat+"&longitude="+pos.lon+
       "&hourly=temperature_2m,precipitation&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum"+
-      "&past_days=1&forecast_days=1&timezone=Asia%2FTokyo";
+      "&past_days=1&forecast_days=2&timezone=Asia%2FTokyo";
     let used=model,d=null;
     try{
       const r=await fetch(base+"&models="+model);if(!r.ok)throw 0;
-      d=await r.json();if(d.daily.temperature_2m_max[1]==null)throw 0;
+      d=await r.json();if(d.daily.temperature_2m_max[2]==null)throw 0;
     }catch(_){
       used="best_match";
       const r=await fetch(base);if(!r.ok)throw new Error("HTTP "+r.status);
@@ -118,22 +122,29 @@ function render(d){
   const word=v=>v>=0.5?"暖かい":v<=-0.5?"寒い":"ほぼ同じ";
   $("verdict").innerHTML="今日は昨日より<br><span class='"+cls(dMax)+"'>"+(Math.abs(dMax)<0.5?"ほぼ同じ":f1(Math.abs(dMax))+"℃ "+word(dMax))+"</span>"+
     "<small>最高気温で比較/いま("+now+"時)は昨日の同時刻より "+sg(dNow)+"℃</small>";
+  const mMax=dl.temperature_2m_max[2], mMin=dl.temperature_2m_min[2];
+  const mH=H.temperature_2m.slice(48,72);
+  const dTm=mMax-tMax;
+  $("verdict").innerHTML+="<small>明日は今日より最高気温 <b class='"+cls(dTm)+"'>"+sg(dTm)+"℃</b>("+(Math.abs(dTm)<0.5?"ほぼ同じ":word(dTm))+")</small>";
   const w=c=>WMO[c]||"—";
+  const df=v=>"<small class='"+cls(v)+"'>"+sg(v)+"</small>";
   $("tbl").innerHTML=
-    "<div class='h'></div><div class='h'>昨日</div><div class='h'>今日</div><div class='h'>差</div>"+
-    "<div>最高</div><div>"+f1(yMax)+"℃</div><div class='big'>"+f1(tMax)+"℃</div><div class='"+cls(dMax)+"'>"+sg(dMax)+"</div>"+
-    "<div>最低</div><div>"+f1(yMin)+"℃</div><div class='big'>"+f1(tMin)+"℃</div><div class='"+cls(dMin)+"'>"+sg(dMin)+"</div>"+
-    "<div>天気</div><div>"+w(dl.weather_code[0])+"</div><div>"+w(dl.weather_code[1])+"</div><div></div>";
-  last={yH,tH,now};draw();
-  const day=H.time.slice(24,48).map((_,i)=>i).filter(i=>i>=7&&i<=21);
-  const rainH=day.filter(i=>(H.precipitation[24+i]||0)>=0.2).length;
-  wear(tMax,tMin,dMax,dl.weather_code[1],rainH,day.map(i=>tH[i]));
+    "<div class='h'></div><div class='h'>昨日</div><div class='h'>今日</div><div class='h tm'>明日</div>"+
+    "<div>最高</div><div>"+f1(yMax)+"℃</div><div class='big'>"+f1(tMax)+"℃"+df(dMax)+"</div><div class='big tm'>"+f1(mMax)+"℃"+df(dTm)+"</div>"+
+    "<div>最低</div><div>"+f1(yMin)+"℃</div><div class='big'>"+f1(tMin)+"℃"+df(dMin)+"</div><div class='big tm'>"+f1(mMin)+"℃"+df(mMin-tMin)+"</div>"+
+    "<div>天気</div><div class='wx'>"+w(dl.weather_code[0])+"</div><div class='wx'>"+w(dl.weather_code[1])+"</div><div class='wx tm'>"+w(dl.weather_code[2])+"</div>"+
+    "<div>雨量</div><div>"+f1(dl.precipitation_sum[0]||0)+"mm</div><div>"+f1(dl.precipitation_sum[1]||0)+"mm</div><div class='tm'>"+f1(dl.precipitation_sum[2]||0)+"mm</div>";
+  last={yH,tH,mH,now};draw();
+  const hrs=[...Array(24).keys()].filter(i=>i>=7&&i<=21);
+  const rainOf=o=>hrs.filter(i=>(H.precipitation[o+i]||0)>=0.2).length;
+  wear("wear","今日",tMax,tMin,dMax,"昨日",dl.weather_code[1],rainOf(24),hrs.map(i=>tH[i]));
+  wear("wear2","明日",mMax,mMin,dTm,"今日",dl.weather_code[2],rainOf(48),hrs.map(i=>mH[i]));
 }
 
 function draw(){
   if(!last)return;
   const s=$("chart"),W=s.clientWidth,Ht=s.clientHeight,p={l:34,r:12,t:14,b:26};
-  const all=last.yH.concat(last.tH).filter(v=>v!=null);
+  const all=last.yH.concat(last.tH,last.mH).filter(v=>v!=null);
   let lo=Math.floor(Math.min(...all))-1,hi=Math.ceil(Math.max(...all))+1;
   const x=i=>p.l+(W-p.l-p.r)*i/23, y=v=>p.t+(Ht-p.t-p.b)*(hi-v)/(hi-lo);
   const path=a=>a.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join("");
@@ -145,11 +156,12 @@ function draw(){
   const n=last.now;
   g+="<line x1='"+x(n)+"' x2='"+x(n)+"' y1='"+p.t+"' y2='"+(Ht-p.b)+"' stroke='#9aa6d6' stroke-dasharray='3 3'/>";
   g+="<path d='"+path(last.yH)+"' fill='none' stroke='#7d8bd8' stroke-width='2.5' stroke-dasharray='6 4'/>";
+  g+="<path d='"+path(last.mH)+"' fill='none' stroke='#4fc1c6' stroke-width='2.5'/>";
   g+="<path d='"+path(last.tH)+"' fill='none' stroke='#ff7a4d' stroke-width='3'/>";
   g+="<circle cx='"+x(n)+"' cy='"+y(last.tH[n])+"' r='5' fill='#ff7a4d'/>";
   s.innerHTML=g;
 }
-function wear(mx,mn,dMax,code,rainH,dayT){
+function wear(el,label,mx,mn,dMax,prev,code,rainH,dayT){
   // 日中(7〜21時)の平均気温で服装を決める
   const a=dayT.reduce((s,v)=>s+v,0)/dayT.length;
   const L=[
@@ -164,10 +176,10 @@ function wear(mx,mn,dMax,code,rainH,dayT){
   const rain=rainH>0||(code>=51&&code<=99);
   const tips=k[4].slice();
   if(mx-mn>=10)tips.push("寒暖差"+Math.round(mx-mn)+"℃:脱ぎ着しやすい服で");
-  if(dMax<=-3)tips.push("昨日より寒いので一枚多めに");
-  else if(dMax>=3)tips.push("昨日より暖かいので一枚少なめでも");
+  if(dMax<=-3)tips.push(prev+"より寒いので一枚多めに");
+  else if(dMax>=3)tips.push(prev+"より暖かいので一枚少なめでも");
   if(rain)tips.push("傘を忘れずに"+(rainH?"(雨の予想 "+rainH+"時間)":""));
-  $("wear").innerHTML=fig(k[2],k[3],rain)+"<div><h2>今日の服装:"+k[1]+"</h2><ul>"+tips.map(s=>"<li>"+s+"</li>").join("")+"</ul><div style='font-size:12px;color:var(--sub);margin-top:4px'>日中の平均 "+f1(a)+"℃ から判断</div></div>";
+  $(el).innerHTML=fig(k[2],k[3],rain)+"<div><h2>"+label+"の服装:"+k[1]+"</h2><ul>"+tips.map(s=>"<li>"+s+"</li>").join("")+"</ul><div style='font-size:12px;color:var(--sub);margin-top:4px'>日中の平均 "+f1(a)+"℃ から判断</div></div>";
 }
 function fig(col,type,rain){
   const skin="#f2c9a0",pants="#2b3566";
